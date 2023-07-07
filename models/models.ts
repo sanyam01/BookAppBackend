@@ -14,9 +14,8 @@ export interface Books {
 }
 
 export interface User {
-    id: string;
-    name: string;
-    orderID: string[];
+    username: string;
+    password: string[];
 }
 
 export interface Users {

@@ -45,18 +45,17 @@ module.exports = function (app) {
 
     app.post('/signup', async (req, res) => {
         const db = getDb();
-        const { username, password } = req.body;
+        const { username, password, userID } = req.body;
 
         const hashedPassword = await bcrypt.hash(password, 12);
 
         const newUser = {
             username,
-            password: hashedPassword
+            password: hashedPassword,
+            userID: userID
         };
         db.collection('Users').insertOne(newUser).then(() => {
-            let token = "";
-            token = jwt.sign({ username: username }, 'secret-key');
-            res.status(200).send({ username: username, token });
+            res.status(200).send({ username: username });
         }).catch((err) => {
             console.log("error", err);
             res.status(500).send("Internal error while adding user");
@@ -71,7 +70,6 @@ module.exports = function (app) {
         let existingUser = null;
         try {
             existingUser = await db.collection('Users').find({ username: username }).toArray();
-            console.warn("existingUser", existingUser);
             if (!existingUser) {
                 res.status(501).send("Invalid credentials");
                 return;
@@ -98,15 +96,17 @@ module.exports = function (app) {
         let token;
         try {
             token = jwt.sign(
-                { username: username },
+                { username: username, userID: existingUser.userID },
                 'secret-key'
             );
         } catch (err) {
             res.status(501).send(err);
         }
+        console.warn("existingUser", existingUser);
 
         res.status(200).send({
             username: username,
+            userID: existingUser[0].userID,
             token: token
         });
     });

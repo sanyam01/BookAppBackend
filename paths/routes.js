@@ -32,6 +32,27 @@ module.exports = function (app) {
 
     });
 
+    app.post('/editBook', isAuth, async (req, res) => {
+        const db = getDb();
+        console.log("req.body", req.body);
+        db.collection('Books').updateOne({ id: req.body.id }, {
+            $set: {
+                name: req.body.name,
+                author: req.body.author,
+                image: req.body.image,
+                description: req.body.description,
+                price: req.body.price,
+                categoryID: req.body.categoryID,
+
+            }
+        }).then(() => {
+            res.status(200).send(req.body);
+        }).catch((err) => {
+            res.status(502).send("internal error while updating book");
+        });
+
+    });
+
     app.post('/deleteBook', isAuth, async (req, res) => {
         const db = getDb();
         console.log("book", req.body);

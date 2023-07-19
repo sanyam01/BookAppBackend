@@ -12,8 +12,19 @@ module.exports = function (app) {
 
         try {
             let arrBooks = await db.collection('Books').find().toArray();
-            console.log("arrBooks", arrBooks);
             res.send(arrBooks);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send("Internal server error");
+        }
+    });
+
+    app.get('/orders', isAuth, async (req, res) => {
+        const db = getDb();
+        const { userID } = req.query;
+        try {
+            let arrOrders = await db.collection('Orders').find({ userID: userID }).toArray();
+            res.send(arrOrders);
         } catch (error) {
             console.error(error);
             res.status(500).send("Internal server error");
@@ -31,6 +42,19 @@ module.exports = function (app) {
         });
 
     });
+
+    app.post('/addOrder', isAuth, async (req, res) => {
+        const db = getDb();
+
+        db.collection('Orders').insertOne(req.body).then(() => {
+            res.status(200).send(req.body);
+        }).catch(() => {
+            res.status(500).send("internal error while adding order");
+        });
+
+    });
+
+
 
     app.post('/editBook', isAuth, async (req, res) => {
         const db = getDb();

@@ -4,8 +4,9 @@ const mongodb = require('mongodb');
 const bcrypt = require('bcrypt');
 const isAuth = require('../middleware/is-auth');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
-module.exports = function (app) {
+module.exports = function (app, upload) {
 
     app.get('/books', async (req, res) => {
         const db = getDb();
@@ -31,6 +32,29 @@ module.exports = function (app) {
         }
     });
 
+    app.get('/images', async (req, res) => {
+        const db = getDb();
+        const { userID } = req.query;
+        try {
+            let arrImages = await db.collection('Images').find().toArray();
+
+            // Map the image paths to base64 encoded data
+            const imagesData = await Promise.all(
+                arrImages.map(async (image) => {
+                    const imagePath = path.join(__dirname, image.imagePath);
+                    const imageBuffer = await fs.promises.readFile(imagePath);
+                    const base64Data = imageBuffer.toString('base64');
+                    return { id: image.id, image: base64Data };
+                })
+            );
+
+            res.send(imagesData);
+        } catch (error) {
+            console.error(error);
+            res.status(500).send("Internal server error");
+        }
+    });
+
 
     app.post('/addBook', isAuth, async (req, res) => {
         const db = getDb();
@@ -41,6 +65,26 @@ module.exports = function (app) {
             res.status(500).send("internal error while adding book");
         });
 
+    });
+
+    app.post('/addImage', isAuth, upload.single('file'), async (req, res) => {
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Image file not received.' });
+        }
+
+        const imagePath = '/uploads/' + req.file.filename;
+
+        // Assuming you want to save the image data to the 'Images' collection in MongoDB
+        try {
+            const db = getDb();
+            const imageEntry = { id: req.body.id, imagePath: imagePath };
+            await db.collection('Images').insertOne(imageEntry);
+            res.status(200).json({ message: 'Image uploaded and saved successfully.', image: imageEntry });
+        } catch (error) {
+            console.error("Error saving image to database:", error);
+            res.status(500).json({ error: 'Internal error while saving image to the database.' });
+        }
     });
 
     app.post('/addOrder', isAuth, async (req, res) => {
@@ -76,6 +120,23 @@ module.exports = function (app) {
         });
 
     });
+
+    app.post('/editImage', isAuth, async (req, res) => {
+        const db = getDb();
+        console.log("req.body", req.body);
+        db.collection('Images').updateOne({ id: req.body.id }, {
+            $set: {
+                image: req.body.image,
+            }
+        }).then(() => {
+            res.status(200).send(req.body);
+        }).catch((err) => {
+            res.status(502).send("internal error while updating book");
+        });
+
+    });
+
+
 
     app.post('/deleteBook', isAuth, async (req, res) => {
         const db = getDb();

@@ -5,6 +5,8 @@ const bcrypt = require('bcrypt');
 const isAuth = require('../middleware/is-auth');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
+const path = require('path');
+
 
 module.exports = function (app, upload) {
 
@@ -41,7 +43,7 @@ module.exports = function (app, upload) {
             // Map the image paths to base64 encoded data
             const imagesData = await Promise.all(
                 arrImages.map(async (image) => {
-                    const imagePath = path.join(__dirname, image.imagePath);
+                    const imagePath = `.${image.imagePath}`;
                     const imageBuffer = await fs.promises.readFile(imagePath);
                     const base64Data = imageBuffer.toString('base64');
                     return { id: image.id, image: base64Data };

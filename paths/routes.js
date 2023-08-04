@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 
 
-module.exports = function (app, upload) {
+module.exports = function (app, upload, s3) {
 
     app.get('/books', async (req, res) => {
         const db = getDb();
@@ -39,18 +39,7 @@ module.exports = function (app, upload) {
         const { userID } = req.query;
         try {
             let arrImages = await db.collection('Images').find().toArray();
-
-            // Map the image paths to base64 encoded data
-            const imagesData = await Promise.all(
-                arrImages.map(async (image) => {
-                    const imagePath = `.${image.imagePath}`;
-                    const imageBuffer = await fs.promises.readFile(imagePath);
-                    const base64Data = imageBuffer.toString('base64');
-                    return { id: image.id, image: base64Data };
-                })
-            );
-
-            res.send(imagesData);
+            res.send(arrImages);
         } catch (error) {
             console.error(error);
             res.status(500).send("Internal server error");
@@ -75,12 +64,14 @@ module.exports = function (app, upload) {
             return res.status(400).json({ error: 'Image file not received.' });
         }
 
-        const imagePath = '/uploads/' + req.file.filename;
+        const imageBuffer = req.file.buffer;
+        const base64Data = imageBuffer.toString('base64');
+      
 
         // Assuming you want to save the image data to the 'Images' collection in MongoDB
         try {
             const db = getDb();
-            const imageEntry = { id: req.body.id, imagePath: imagePath };
+            const imageEntry = { id: req.body.id, image: base64Data };
             await db.collection('Images').insertOne(imageEntry);
             res.status(200).json({ message: 'Image uploaded and saved successfully.', image: imageEntry });
         } catch (error) {
@@ -88,6 +79,8 @@ module.exports = function (app, upload) {
             res.status(500).json({ error: 'Internal error while saving image to the database.' });
         }
     });
+
+    
 
     app.post('/addOrder', isAuth, async (req, res) => {
         const db = getDb();
@@ -123,19 +116,24 @@ module.exports = function (app, upload) {
 
     });
 
-    app.post('/editImage', isAuth, async (req, res) => {
-        const db = getDb();
-        console.log("req.body", req.body);
-        db.collection('Images').updateOne({ id: req.body.id }, {
-            $set: {
-                image: req.body.image,
-            }
-        }).then(() => {
-            res.status(200).send(req.body);
-        }).catch((err) => {
-            res.status(502).send("internal error while updating book");
-        });
+    app.post('/editImage', isAuth, upload.single('file'), async (req, res) => {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Image file not received.' });
+        }
+        const imageBuffer = req.file.buffer;
+        const base64Data = imageBuffer.toString('base64');
+    
 
+        // Assuming you want to update the image data in the 'Images' collection in MongoDB
+        try {
+            const db = getDb();
+            const imageEntry = { id: req.body.id, image: base64Data };
+            await db.collection('Images').updateOne({ id: req.body.id }, { $set: imageEntry });
+            res.status(200).json({ message: 'Image updated and saved successfully.', image: imageEntry });
+        } catch (error) {
+            console.error("Error updating image in database:", error);
+            res.status(500).json({ error: 'Internal error while updating image in the database.' });
+        }
     });
 
 

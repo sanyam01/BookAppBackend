@@ -23,7 +23,7 @@ app.use(myParser.json());
 
 app.use(
   cors({
-    origin: 'http://localhost:3000', // Replace with the URL of your frontend
+    origin: '*', // Replace with the URL of your frontend
   })
 );
 

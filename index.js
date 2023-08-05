@@ -3,9 +3,9 @@ require('dotenv').config();
 const express = require('express'); //Import the express dependency
 const app = express();              //Instantiate an express app, the main work horse of this server
 
-// const MONGODB_URI =
-//   'mongodb+srv://sanyam1396:sanyam1396@booksappcluster.oxr9lg8.mongodb.net/BooksApp?retryWrites=true&w=majority';
-const MONGODB_URI = process.env.MONGODB_URL;
+const MONGODB_URI =
+  'mongodb+srv://sanyam1396:sanyam1396@booksappcluster.oxr9lg8.mongodb.net/BooksApp?retryWrites=true&w=majority';
+// const MONGODB_URI = process.env.MONGODB_URL;
 
 const port = 4000;                  //Save the port number where your server will be listening
 const cors = require('cors');

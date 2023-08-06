@@ -37,7 +37,7 @@ app.get('/', (req, res) => {        //get requests to the root ("/") will route 
 require('./paths/routes')(app, upload);
 
 mongoConnect(() => {
-  app.listen(port);
+  app.listen(process.env.PORT || port);
   console.log(`Now listening on port ${port}`);
 
 });

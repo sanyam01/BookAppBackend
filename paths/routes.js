@@ -39,7 +39,20 @@ module.exports = function (app, upload, s3) {
         const { userID } = req.query;
         try {
             let arrImages = await db.collection('Images').find().toArray();
-            res.send(arrImages);
+
+            const processedImages = await Promise.all(arrImages.map(async (image) => {
+                const processedImageBuffer = await sharp(image.buffer)
+                    .resize({ width: 300 }) // Example: resize to width of 300px
+                    .toBuffer();
+                
+                // Update the image object with processed data
+                return {
+                    ...image,
+                    buffer: processedImageBuffer
+                };
+            }));
+
+            res.send(processedImages);
         } catch (error) {
             console.error(error);
             res.status(500).send("Internal server error");

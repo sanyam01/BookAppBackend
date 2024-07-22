@@ -1,12 +1,8 @@
 
 const getDb = require('../mongodb/mongodb').getDb;
-const mongodb = require('mongodb');
 const bcrypt = require('bcrypt');
 const isAuth = require('../middleware/is-auth');
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
-const path = require('path');
-const sharp = require('sharp');
 
 
 module.exports = function (app, upload, s3) {
@@ -40,29 +36,6 @@ module.exports = function (app, upload, s3) {
         const { userID } = req.query;
         try {
             let arrImages = await db.collection('Images').find().toArray();
-
-            // const processedImages = await Promise.all(arrImages.map(async (image) => {
-            //     try {
-            //         // Convert base64-encoded image data to buffer
-            //         const imageBuffer = Buffer.from(image.image, 'base64');
-    
-            //         // Process the image using Sharp
-            //         const processedImageBuffer = await sharp(imageBuffer)
-            //             .resize({ width: 300 }) // Example: resize to width of 300px
-            //             .toBuffer();
-    
-            //         // Update the image object with processed data
-            //         return {
-            //             ...image,
-            //             buffer: processedImageBuffer
-            //         };
-            //     } catch (error) {
-            //         console.error("Error processing image:", error);
-            //         // Handle image processing error
-            //         // For example: return original image data without processing
-            //         return image;
-            //     }
-            // }));
 
             res.send(arrImages);
         } catch (error) {
